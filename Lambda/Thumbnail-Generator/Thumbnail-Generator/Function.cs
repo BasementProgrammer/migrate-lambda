@@ -14,6 +14,7 @@ namespace Thumbnail_Generator;
 public class Function
 {
     IAmazonS3 S3Client { get; set; }
+    ImageProcessor ImageProcessor { get; set; } 
 
     /// <summary>
     /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
@@ -23,6 +24,7 @@ public class Function
     public Function()
     {
         S3Client = new AmazonS3Client();
+        ImageProcessor = new ImageProcessor();
     }
 
     /// <summary>
@@ -32,6 +34,7 @@ public class Function
     public Function(IAmazonS3 s3Client)
     {
         this.S3Client = s3Client;
+        this.ImageProcessor = new ImageProcessor();
     }
 
     /// <summary>
@@ -68,21 +71,24 @@ public class Function
                 using (var memoryStream = new MemoryStream())
                 {
                     responseGetObject.ResponseStream.CopyTo(memoryStream);
-                    // Create a thumbnail image
-                    using (var image = Image.Load(memoryStream.ToArray()))
+                    //
+                    // Business logic here
+                    //
+                    using (var outputStream = ImageProcessor.ProcessImage(memoryStream, 100, 100))
                     {
-                        image.Mutate(x => x.Resize(image.Width / 10, image.Height / 10));
+                        // Get the object key file name
+                        string[] strings = s3Event.Object.Key.Split("/");
+                        string fileName = strings[strings.Length - 1];
+
                         // Save the thumbnail image to the same bucket
-                        var outMemoryStream = new MemoryStream();
-                        image.Save(outMemoryStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
                         var putObjectRequest = new PutObjectRequest
-                        {
+                        {    
                             BucketName = s3Event.Bucket.Name,
-                            Key = "thumbnail-" + s3Event.Object.Key,
-                            InputStream = outMemoryStream
-                        };
+                            Key = "output/thumbnail-" + fileName,
+                            InputStream = outputStream
+                        }; 
                         await this.S3Client.PutObjectAsync(putObjectRequest);
-                        outMemoryStream.Dispose();
+                        outputStream.Dispose();
                     }
                 }
             }
