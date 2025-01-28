@@ -16,6 +16,8 @@ namespace Function
 	{
 		public async Task<string> greet(string input) 
 		{
+			ImageProcessor imageProcessor = new ImageProcessor ();
+
 			if (input.StartsWith('{'))
 			{
 				dynamic sourceData = JObject.Parse (input);
@@ -48,10 +50,17 @@ namespace Function
 							BucketName = sourceData.data.additionalDetails.bucketName,
 							NamespaceName = sourceData.data.additionalDetails["namespace"],
 							ObjectName = "thumbnail-" + fileNameParts[fileNameParts.Length -1],
-							PutObjectBody = new MemoryStream (),
+							//PutObjectBody = new MemoryStream (),
 						};
 
-						getResponce.InputStream.CopyTo (putObjectRequest.PutObjectBody);
+						MemoryStream buffer = new MemoryStream();
+						getResponce.InputStream.CopyTo (buffer);
+						buffer.Flush();
+						buffer.Position = 0;
+
+						putObjectRequest.PutObjectBody = imageProcessor.ProcessImage(buffer, 100, 100);
+
+						//getResponce.InputStream.CopyTo (putObjectRequest.PutObjectBody);
 						putObjectRequest.PutObjectBody.Flush();
 						putObjectRequest.PutObjectBody.Position = 0;
 
