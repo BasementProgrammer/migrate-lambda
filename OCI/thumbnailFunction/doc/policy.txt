@@ -1,0 +1,1 @@
+Allow dynamic-group 'Functions-in-Functions-development' to manage object-family in compartment Functions-Development
