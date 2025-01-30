@@ -1,6 +1,6 @@
 schema_version: 20180708
 name: thumbnailfunction
-version: 0.0.50
+version: 0.0.52
 runtime: dotnet8.0
 build_image: fnproject/dotnet:8.0-1.0.39-dev
 run_image: fnproject/dotnet:8.0-1.0.39
